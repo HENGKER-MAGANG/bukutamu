@@ -1,6 +1,6 @@
 <?php
-$host = getenv('DB_HOST') ?: 'zos48ogw8gso4o0w84gks8w8';
-$user = getenv('DB_USER') ?: 'mysql';
+$host = getenv('DB_HOST') ?: 'mwg8g0g440c80gs8c80wgk8c';
+$user = getenv('DB_USER') ?: 'buku-tamu';
 $pass = getenv('DB_PASS') ?: 'root123';
 $db   = getenv('DB_NAME') ?: 'bukutamu';
 
