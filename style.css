@@ -1,0 +1,21 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+  border-radius: 1.5rem;
+}
+
+textarea.form-control {
+  resize: none;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+  font-size: 0.95rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f0f8ff;
+  transition: background-color 0.3s;
+}
