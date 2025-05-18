@@ -25,7 +25,7 @@ $asal = $_GET['asal'] ?? '';
     </div>
 
     <!-- Form Pencarian -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4 mb-6 no-print">
       <form method="GET" class="flex flex-col md:flex-row gap-4">
         <input type="text" name="keyword" value="<?= htmlspecialchars($keyword) ?>" placeholder="🔍 Cari nama..." class="flex-1 px-4 py-2 border rounded-lg">
         <input type="text" name="asal" value="<?= htmlspecialchars($asal) ?>" placeholder="🏫 Cari asal sekolah..." class="flex-1 px-4 py-2 border rounded-lg">
@@ -38,7 +38,13 @@ $asal = $_GET['asal'] ?? '';
 
     <!-- Tabel Data -->
     <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-      <div id="new-message-indicator" class="hidden mb-4 text-green-700 font-semibold bg-green-100 p-2 rounded-lg shadow"></div>
+      <div id="new-message-indicator" class="hidden mb-4">
+        <div class="flex justify-between items-center bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">
+          <span id="indicator-text" class="font-bold">🔔 Pesan baru masuk!</span>
+          <a href="tamu.php" class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded shadow">Lihat semua data</a>
+        </div>
+      </div>
+
       <table class="w-full table-auto text-sm text-left">
         <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <tr>
@@ -52,14 +58,15 @@ $asal = $_GET['asal'] ?? '';
         </thead>
         <tbody id="tabel-buku-tamu"></tbody>
       </table>
-      <div class="mt-4 flex justify-between items-center no-print">
+
+      <div class="mt-4 text-right no-print">
         <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow">🖨️ Print</button>
-        <button id="showAllBtn" onclick="showAllData()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded shadow">🔁 Tampilkan Semua Data</button>
       </div>
     </div>
   </div>
 
-  <audio id="notifSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_7c4cc15696.mp3" preload="auto"></audio>
+  <!-- Notifikasi Suara -->
+  <audio id="notifSound" src="https://notificationsounds.com/storage/sounds/file-sounds-1151-pristine.mp3" preload="auto"></audio>
 
   <script>
     function confirmDelete(id) {
@@ -96,16 +103,12 @@ $asal = $_GET['asal'] ?? '';
     }
 
     let lastId = 0;
-    let filter = {
-      keyword: '<?= $keyword ?>',
-      asal: '<?= $asal ?>'
-    };
 
-    function fetchData(isLive = true) {
+    function fetchData() {
       const params = new URLSearchParams({
-        keyword: filter.keyword,
-        asal: filter.asal,
-        lastId: isLive ? lastId : 0
+        keyword: '<?= $keyword ?>',
+        asal: '<?= $asal ?>',
+        lastId: lastId
       });
 
       fetch('fetch_data.php?' + params.toString())
@@ -113,26 +116,18 @@ $asal = $_GET['asal'] ?? '';
         .then(data => {
           if (data.html) {
             document.getElementById('tabel-buku-tamu').innerHTML = data.html;
+            document.getElementById('new-message-indicator').classList.remove('hidden');
+            document.getElementById('indicator-text').textContent = `🔔 ${data.newCount} pesan baru masuk!`;
 
-            if (isLive && data.newCount > 0) {
-              document.getElementById('notifSound').play().catch(e => {});
-              document.getElementById('new-message-indicator').innerHTML = `🔔 ${data.newCount} pesan baru masuk!`;
-              document.getElementById('new-message-indicator').classList.remove('hidden');
-              document.getElementById('showAllBtn').classList.remove('hidden');
-
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else if (!isLive) {
-              document.getElementById('new-message-indicator').classList.add('hidden');
-              document.getElementById('showAllBtn').classList.add('hidden');
-            }
+            const audio = document.getElementById('notifSound');
+            audio.pause();
+            audio.currentTime = 0;
+            audio.play();
 
             lastId = data.latestId;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         });
-    }
-
-    function showAllData() {
-      fetchData(false); // Ambil semua data ulang
     }
 
     fetchData();
