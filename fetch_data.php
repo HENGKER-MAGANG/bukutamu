@@ -3,65 +3,48 @@ include 'db.php';
 
 $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
-$lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
+$lastId = intval($_GET['lastId'] ?? 0);
 
-// Query dengan filter
-$query = "SELECT * FROM buku_tamu WHERE 1=1";
-$params = [];
-$types = "";
+$query = "SELECT * FROM tamu WHERE 1";
 
 if (!empty($keyword)) {
-    $query .= " AND nama LIKE ?";
-    $params[] = "%" . $keyword . "%";
-    $types .= "s";
+  $keyword = $conn->real_escape_string($keyword);
+  $query .= " AND nama LIKE '%$keyword%'";
 }
 if (!empty($asal)) {
-    $query .= " AND asal_sekolah LIKE ?";
-    $params[] = "%" . $asal . "%";
-    $types .= "s";
+  $asal = $conn->real_escape_string($asal);
+  $query .= " AND asal_sekolah LIKE '%$asal%'";
 }
-$query .= " ORDER BY id ASC";
 
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$result = $stmt->get_result();
+$query .= " ORDER BY id DESC";
+
+$result = mysqli_query($conn, $query);
 
 $html = '';
+$no = 1;
 $newCount = 0;
 $latestId = $lastId;
-$timestamp = null;
-$no = 1;
 
-while ($d = $result->fetch_assoc()) {
-    if ($d['id'] > $lastId) {
-        $newCount++;
-        if ($d['id'] > $latestId) {
-            $latestId = $d['id'];
-            $timestamp = $d['created_at'] ?? date('Y-m-d H:i:s'); // Ambil waktu data terakhir
-        }
+while ($row = mysqli_fetch_assoc($result)) {
+  if ($row['id'] > $lastId) {
+    $newCount++;
+    if ($row['id'] > $latestId) {
+      $latestId = $row['id'];
     }
+  }
 
-    $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
-    $html .= '<td class="p-2">' . $no++ . '</td>';
-    $html .= '<td class="p-2">' . htmlspecialchars($d['nama']) . '</td>';
-    $html .= '<td class="p-2">' . htmlspecialchars($d['email']) . '</td>';
-    $html .= '<td class="p-2">' . htmlspecialchars($d['asal_sekolah']) . '</td>';
-    $html .= '<td class="p-2">' . htmlspecialchars($d['pesan']) . '</td>';
-    $html .= '<td class="p-2 flex gap-2 no-print">';
-    $html .= '<a href="edit_tamu.php?id=' . $d['id'] . '" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500 text-xs">Edit</a>';
-    $html .= '<button onclick="confirmDelete(' . $d['id'] . ')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">Hapus</button>';
-    $html .= '</td>';
-    $html .= '</tr>';
+  $html .= '<tr>';
+  $html .= '<td class="p-2 border text-center">' . $no++ . '</td>';
+  $html .= '<td class="p-2 border">' . htmlspecialchars($row['nama']) . '</td>';
+  $html .= '<td class="p-2 border">' . htmlspecialchars($row['email']) . '</td>';
+  $html .= '<td class="p-2 border">' . htmlspecialchars($row['asal_sekolah']) . '</td>';
+  $html .= '<td class="p-2 border">' . htmlspecialchars($row['pesan']) . '</td>';
+  $html .= '<td class="p-2 border no-print text-center"><button onclick="confirmDelete(' . $row['id'] . ')" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Hapus</button></td>';
+  $html .= '</tr>';
 }
 
-// Kirim respons JSON
 echo json_encode([
-    'html' => $html,
-    'newCount' => $newCount,
-    'latestId' => $latestId,
-    'recent' => $newCount > 0,
-    'timestamp' => $timestamp // format: "2025-05-18 14:23:55"
+  'html' => $html,
+  'newCount' => $newCount,
+  'latestId' => $latestId
 ]);
