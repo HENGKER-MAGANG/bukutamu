@@ -63,7 +63,7 @@ $status = $_GET['status'] ?? '';
 
 <script>
 let lastId = 0;
-let isInitialLoad = true;
+let lastNotifTime = 0;
 
 function confirmDelete(id) {
   Swal.fire({
@@ -125,22 +125,24 @@ function fetchData(isManual = false) {
         document.getElementById('tabel-buku-tamu').innerHTML = data.html;
       }
 
-      if (data.newCount > 0 && !isManual && !isInitialLoad) {
-        document.getElementById('notifSound').play();
-        Swal.fire({
-          icon: 'success',
-          title: '🔔 Pesan Baru Masuk',
-          text: `${data.newCount} pesan baru berhasil diterima.`,
-          showConfirmButton: false,
-          timer: 3000
-        });
+      if (data.newCount > 0 && data.recent && !isManual) {
+        const now = Date.now();
+        if (now - lastNotifTime > 1500) {
+          document.getElementById('notifSound').play();
+          Swal.fire({
+            icon: 'success',
+            title: '🔔 Pesan Baru Masuk',
+            text: `${data.newCount} pesan baru berhasil diterima.`,
+            showConfirmButton: false,
+            timer: 3000
+          });
+          lastNotifTime = now;
+        }
       }
 
       if (data.latestId > lastId) {
         lastId = data.latestId;
       }
-
-      isInitialLoad = false;
     });
 }
 
