@@ -1,49 +1,56 @@
 <?php
-include 'koneksi.php';
+include 'db.php';
 
-$keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
-$asal = isset($_GET['asal']) ? $_GET['asal'] : '';
-$lastId = isset($_GET['lastId']) ? (int)$_GET['lastId'] : 0;
+$keyword = $_GET['keyword'] ?? '';
+$asal = $_GET['asal'] ?? '';
+$lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
 
-$query = "SELECT * FROM buku_tamu WHERE id > $lastId AND nama LIKE '%$keyword%' AND asal_sekolah LIKE '%$asal%' ORDER BY id DESC";
-$result = mysqli_query($koneksi, $query);
+// Query dasar
+$query = "SELECT * FROM buku_tamu WHERE id > $lastId";
 
-$newRows = [];
+// Tambahkan filter keyword jika ada
+if (!empty($keyword)) {
+    $keyword = mysqli_real_escape_string($conn, $keyword);
+    $query .= " AND nama LIKE '%$keyword%'";
+}
+
+// Tambahkan filter asal jika ada
+if (!empty($asal)) {
+    $asal = mysqli_real_escape_string($conn, $asal);
+    $query .= " AND asal_sekolah LIKE '%$asal%'";
+}
+
+$query .= " ORDER BY id ASC";
+
+$result = mysqli_query($conn, $query);
+
+$html = '';
 $latestId = $lastId;
+$no = 1;
 
 while ($row = mysqli_fetch_assoc($result)) {
-  $newRows[] = $row;
-  if ($row['id'] > $latestId) {
-    $latestId = $row['id'];
-  }
+    $latestId = $row['id']; // update last ID
+    $html .= '
+    <tr>
+        <td class="p-2 border-b">' . $no++ . '</td>
+        <td class="p-2 border-b">' . htmlspecialchars($row['nama']) . '</td>
+        <td class="p-2 border-b">' . htmlspecialchars($row['email']) . '</td>
+        <td class="p-2 border-b">' . htmlspecialchars($row['asal_sekolah']) . '</td>
+        <td class="p-2 border-b">' . nl2br(htmlspecialchars($row['pesan'])) . '</td>
+        <td class="p-2 border-b no-print">
+            <button onclick="confirmDelete(' . $row['id'] . ')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
+                Hapus
+            </button>
+        </td>
+    </tr>';
 }
 
-if (count($newRows) > 0) {
-  $fullQuery = "SELECT * FROM buku_tamu WHERE nama LIKE '%$keyword%' AND asal_sekolah LIKE '%$asal%' ORDER BY id DESC";
-  $fullResult = mysqli_query($koneksi, $fullQuery);
-
-  ob_start();
-  $no = 1;
-  while ($row = mysqli_fetch_assoc($fullResult)) {
-    echo '<tr>';
-    echo '<td>' . $no++ . '</td>';
-    echo '<td>' . htmlspecialchars($row['nama']) . '</td>';
-    echo '<td>' . htmlspecialchars($row['asal_sekolah']) . '</td>';
-    echo '<td>' . htmlspecialchars($row['waktu']) . '</td>';
-    echo '</tr>';
-  }
-  $html = ob_get_clean();
-
-  echo json_encode([
+$response = [
     'html' => $html,
-    'newCount' => count($newRows),
-    'latestId' => $latestId
-  ]);
-} else {
-  echo json_encode([
-    'html' => null,
-    'newCount' => 0,
-    'latestId' => $lastId
-  ]);
-}
+    'latestId' => $latestId,
+    'newCount' => ($latestId > $lastId) ? ($latestId - $lastId) : 0
+];
+
+header('Content-Type: application/json');
+echo json_encode($response);
 ?>
