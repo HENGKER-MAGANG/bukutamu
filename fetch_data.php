@@ -5,19 +5,19 @@ $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
 $lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
 
-// Ambil semua data sesuai filter
+// Query dengan filter
 $query = "SELECT * FROM buku_tamu WHERE 1=1";
 $params = [];
 $types = "";
 
 if (!empty($keyword)) {
     $query .= " AND nama LIKE ?";
-    $params[] = "%$keyword%";
+    $params[] = "%" . $keyword . "%";
     $types .= "s";
 }
 if (!empty($asal)) {
     $query .= " AND asal_sekolah LIKE ?";
-    $params[] = "%$asal%";
+    $params[] = "%" . $asal . "%";
     $types .= "s";
 }
 $query .= " ORDER BY id ASC";
@@ -32,6 +32,7 @@ $result = $stmt->get_result();
 $html = '';
 $newCount = 0;
 $latestId = $lastId;
+$timestamp = null;
 $no = 1;
 
 while ($d = $result->fetch_assoc()) {
@@ -39,6 +40,7 @@ while ($d = $result->fetch_assoc()) {
         $newCount++;
         if ($d['id'] > $latestId) {
             $latestId = $d['id'];
+            $timestamp = $d['created_at'] ?? date('Y-m-d H:i:s'); // Ambil waktu data terakhir
         }
     }
 
@@ -55,9 +57,11 @@ while ($d = $result->fetch_assoc()) {
     $html .= '</tr>';
 }
 
+// Kirim respons JSON
 echo json_encode([
     'html' => $html,
     'newCount' => $newCount,
     'latestId' => $latestId,
-    'recent' => $newCount > 0
+    'recent' => $newCount > 0,
+    'timestamp' => $timestamp // format: "2025-05-18 14:23:55"
 ]);
