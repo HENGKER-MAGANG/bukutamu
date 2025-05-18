@@ -17,9 +17,9 @@ $asal = $_GET['asal'] ?? '';
 <body class="bg-gray-100 min-h-screen p-4">
 
   <div class="max-w-6xl mx-auto">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 no-print">
       <h1 class="text-2xl font-bold text-gray-700">📖 Data Buku Tamu</h1>
-      <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow no-print">
+      <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow">
         Logout
       </button>
     </div>
@@ -38,13 +38,7 @@ $asal = $_GET['asal'] ?? '';
 
     <!-- Tabel Data -->
     <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-      <div id="new-message-indicator" class="hidden mb-4 no-print">
-        <div class="flex justify-between items-center bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">
-          <span id="indicator-text" class="font-bold">🔔 Pesan baru masuk!</span>
-          <a href="tamu.php" class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded shadow">Lihat semua data</a>
-        </div>
-      </div>
-
+      <div id="new-message-indicator" class="hidden mb-2 text-green-600 font-bold no-print"></div>
       <table class="w-full table-auto text-sm text-left">
         <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <tr>
@@ -58,15 +52,13 @@ $asal = $_GET['asal'] ?? '';
         </thead>
         <tbody id="tabel-buku-tamu"></tbody>
       </table>
-
       <div class="mt-4 text-right no-print">
         <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow">🖨️ Print</button>
       </div>
     </div>
   </div>
 
-  <!-- Notifikasi Suara -->
-  <audio id="notifSound" src="https://notificationsounds.com/storage/sounds/file-sounds-1151-pristine.mp3" preload="auto"></audio>
+  <audio id="notifSound" src="https://notificationsounds.com/soundfiles/b2ffb6e49135a5f9c0c4f6f7d38c4a86/file-sounds-1151-pristine.mp3" preload="auto"></audio>
 
   <script>
     function confirmDelete(id) {
@@ -116,16 +108,18 @@ $asal = $_GET['asal'] ?? '';
         .then(data => {
           if (data.html) {
             document.getElementById('tabel-buku-tamu').innerHTML = data.html;
-            document.getElementById('new-message-indicator').classList.remove('hidden');
-            document.getElementById('indicator-text').textContent = `🔔 ${data.newCount} pesan baru masuk!`;
 
-            const audio = document.getElementById('notifSound');
-            audio.pause();
-            audio.currentTime = 0;
-            audio.play();
+            if (data.newCount > 0) {
+              document.getElementById('new-message-indicator').innerHTML = `🔔 ${data.newCount} pesan baru masuk!`;
+              document.getElementById('new-message-indicator').classList.remove('hidden');
+
+              document.getElementById('notifSound').play();
+              window.scrollTo({ top: 0, behavior: 'smooth' }); // Autoscroll ke atas
+            } else {
+              document.getElementById('new-message-indicator').classList.add('hidden');
+            }
 
             lastId = data.latestId;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         });
     }
