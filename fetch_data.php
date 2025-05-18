@@ -5,62 +5,59 @@ $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
 $lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
 
-// Query dasar
-$query = "SELECT * FROM buku_tamu WHERE id > $lastId";
+// Bangun query dan bind param
+$query = "SELECT * FROM buku_tamu WHERE id > ?";
+$params = [$lastId];
+$types = "i";
 
-// Tambahkan filter keyword jika ada
 if (!empty($keyword)) {
-    $keyword = mysqli_real_escape_string($conn, $keyword);
-    $query .= " AND nama LIKE '%$keyword%'";
+    $query .= " AND nama LIKE ?";
+    $params[] = "%$keyword%";
+    $types .= "s";
 }
 
-// Tambahkan filter asal jika ada
 if (!empty($asal)) {
-    $asal = mysqli_real_escape_string($conn, $asal);
-    $query .= " AND asal_sekolah LIKE '%$asal%'";
+    $query .= " AND asal_sekolah LIKE ?";
+    $params[] = "%$asal%";
+    $types .= "s";
 }
 
 $query .= " ORDER BY id ASC";
 
-$result = mysqli_query($conn, $query);
+$stmt = $conn->prepare($query);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$dataBaru = [];
+$latestId = $lastId;
+
+while ($d = $result->fetch_assoc()) {
+    $dataBaru[] = $d;
+    if ($d['id'] > $latestId) {
+        $latestId = $d['id'];
+    }
+}
 
 $html = '';
-$latestId = $lastId;
-$latestTimestamp = null;
 $no = 1;
-
-while ($row = mysqli_fetch_assoc($result)) {
-    $latestId = $row['id'];
-    $latestTimestamp = $row['created_at'] ?? date('Y-m-d H:i:s'); // pastikan kolom timestamp ada
-
-    $html .= '
-    <tr>
-        <td class="p-2 border-b">' . $no++ . '</td>
-        <td class="p-2 border-b">' . htmlspecialchars($row['nama']) . '</td>
-        <td class="p-2 border-b">' . htmlspecialchars($row['email']) . '</td>
-        <td class="p-2 border-b">' . htmlspecialchars($row['asal_sekolah']) . '</td>
-        <td class="p-2 border-b">' . nl2br(htmlspecialchars($row['pesan'])) . '</td>
-        <td class="p-2 border-b no-print">
-            <button onclick="confirmDelete(' . $row['id'] . ')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
-                Hapus
-            </button>
-        </td>
-    </tr>';
+foreach ($dataBaru as $d) {
+    $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
+    $html .= '<td class="p-2">' . $no++ . '</td>';
+    $html .= '<td class="p-2">' . htmlspecialchars($d['nama']) . '</td>';
+    $html .= '<td class="p-2">' . htmlspecialchars($d['email']) . '</td>';
+    $html .= '<td class="p-2">' . htmlspecialchars($d['asal_sekolah']) . '</td>';
+    $html .= '<td class="p-2">' . htmlspecialchars($d['pesan']) . '</td>';
+    $html .= '<td class="p-2 flex gap-2 no-print">';
+    $html .= '<a href="edit_tamu.php?id=' . $d['id'] . '" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500 text-xs">Edit</a>';
+    $html .= '<button onclick="confirmDelete(' . $d['id'] . ')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">Hapus</button>';
+    $html .= '</td>';
+    $html .= '</tr>';
 }
 
-// Hitung apakah data terbaru masuk dalam 2 detik terakhir
-$recent = false;
-if ($latestTimestamp) {
-    $recent = (time() - strtotime($latestTimestamp)) <= 2;
-}
-
-$response = [
+echo json_encode([
     'html' => $html,
+    'newCount' => count($dataBaru),
     'latestId' => $latestId,
-    'newCount' => ($latestId > $lastId) ? ($latestId - $lastId) : 0,
-    'recent' => $recent
-];
-
-header('Content-Type: application/json');
-echo json_encode($response);
-?>
+    'recent' => count($dataBaru) > 0
+]);
