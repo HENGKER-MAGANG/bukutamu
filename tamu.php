@@ -1,5 +1,5 @@
 <?php
-include 'koneksi.php';
+include 'db.php';
 
 $keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
 $asal = isset($_GET['asal']) ? $_GET['asal'] : '';
