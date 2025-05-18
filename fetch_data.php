@@ -5,69 +5,43 @@ $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
 $lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
 
-// Bangun query dan bind param
-$query = "SELECT * FROM buku_tamu WHERE id > ?";
-$params = [$lastId];
-$types = "i";
+// Ambil semua data sesuai filter
+$query = "SELECT * FROM buku_tamu WHERE 1=1";
+$params = [];
+$types = "";
 
 if (!empty($keyword)) {
     $query .= " AND nama LIKE ?";
     $params[] = "%$keyword%";
     $types .= "s";
 }
-
 if (!empty($asal)) {
     $query .= " AND asal_sekolah LIKE ?";
     $params[] = "%$asal%";
     $types .= "s";
 }
-
 $query .= " ORDER BY id ASC";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param($types, ...$params);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
-$dataBaru = [];
+$html = '';
+$newCount = 0;
 $latestId = $lastId;
+$no = 1;
 
 while ($d = $result->fetch_assoc()) {
-    $dataBaru[] = $d;
-    if ($d['id'] > $latestId) {
-        $latestId = $d['id'];
+    if ($d['id'] > $lastId) {
+        $newCount++;
+        if ($d['id'] > $latestId) {
+            $latestId = $d['id'];
+        }
     }
-}
 
-// Hitung jumlah total data sebelumnya (untuk nomor urut)
-$offsetQuery = "SELECT COUNT(*) as total FROM buku_tamu WHERE id <= ?";
-$offsetParams = [$lastId];
-$offsetTypes = "i";
-
-if (!empty($keyword)) {
-    $offsetQuery .= " AND nama LIKE ?";
-    $offsetParams[] = "%$keyword%";
-    $offsetTypes .= "s";
-}
-
-if (!empty($asal)) {
-    $offsetQuery .= " AND asal_sekolah LIKE ?";
-    $offsetParams[] = "%$asal%";
-    $offsetTypes .= "s";
-}
-
-$offsetStmt = $conn->prepare($offsetQuery);
-$offsetStmt->bind_param($offsetTypes, ...$offsetParams);
-$offsetStmt->execute();
-$offsetResult = $offsetStmt->get_result();
-$offsetRow = $offsetResult->fetch_assoc();
-$offset = $offsetRow['total'] ?? 0;
-
-// Bangun HTML
-$html = '';
-$no = $offset + 1;
-
-foreach ($dataBaru as $d) {
     $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
     $html .= '<td class="p-2">' . $no++ . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['nama']) . '</td>';
@@ -83,7 +57,7 @@ foreach ($dataBaru as $d) {
 
 echo json_encode([
     'html' => $html,
-    'newCount' => count($dataBaru),
+    'newCount' => $newCount,
     'latestId' => $latestId,
-    'recent' => count($dataBaru) > 0
+    'recent' => $newCount > 0
 ]);
