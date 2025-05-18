@@ -38,7 +38,6 @@ $asal = $_GET['asal'] ?? '';
 
   <!-- Tabel Data -->
   <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-    <div id="new-message-indicator" class="hidden mb-2 text-green-600 font-bold no-print"></div>
     <table class="w-full table-auto text-sm text-left">
       <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <tr>
@@ -112,17 +111,16 @@ function fetchData() {
       }
 
       if (data.newCount > 0 && data.recent) {
-        const indicator = document.getElementById('new-message-indicator');
-        indicator.textContent = `🔔 ${data.newCount} pesan baru masuk!`;
-        indicator.classList.remove('hidden');
-
         document.getElementById('notifSound').play();
         lastId = data.latestId;
 
-        setTimeout(() => {
-          indicator.classList.add('hidden');
-          indicator.textContent = '';
-        }, 3000);
+        Swal.fire({
+          icon: 'success',
+          title: '🔔 Pesan Baru Masuk',
+          text: `${data.newCount} pesan baru berhasil diterima.`,
+          showConfirmButton: false,
+          timer: 3000
+        });
       }
     });
 }
