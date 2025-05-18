@@ -39,8 +39,34 @@ while ($d = $result->fetch_assoc()) {
     }
 }
 
+// Hitung jumlah total data sebelumnya (untuk nomor urut)
+$offsetQuery = "SELECT COUNT(*) as total FROM buku_tamu WHERE id <= ?";
+$offsetParams = [$lastId];
+$offsetTypes = "i";
+
+if (!empty($keyword)) {
+    $offsetQuery .= " AND nama LIKE ?";
+    $offsetParams[] = "%$keyword%";
+    $offsetTypes .= "s";
+}
+
+if (!empty($asal)) {
+    $offsetQuery .= " AND asal_sekolah LIKE ?";
+    $offsetParams[] = "%$asal%";
+    $offsetTypes .= "s";
+}
+
+$offsetStmt = $conn->prepare($offsetQuery);
+$offsetStmt->bind_param($offsetTypes, ...$offsetParams);
+$offsetStmt->execute();
+$offsetResult = $offsetStmt->get_result();
+$offsetRow = $offsetResult->fetch_assoc();
+$offset = $offsetRow['total'] ?? 0;
+
+// Bangun HTML
 $html = '';
-$no = 1;
+$no = $offset + 1;
+
 foreach ($dataBaru as $d) {
     $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
     $html .= '<td class="p-2">' . $no++ . '</td>';
