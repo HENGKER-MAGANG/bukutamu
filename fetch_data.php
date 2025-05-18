@@ -7,12 +7,11 @@ $lastId = intval($_GET['lastId'] ?? 0);
 
 $query = "SELECT * FROM tamu WHERE 1";
 
+// Filter pencarian
 if (!empty($keyword)) {
-  $keyword = $conn->real_escape_string($keyword);
   $query .= " AND nama LIKE '%$keyword%'";
 }
 if (!empty($asal)) {
-  $asal = $conn->real_escape_string($asal);
   $query .= " AND asal_sekolah LIKE '%$asal%'";
 }
 

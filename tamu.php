@@ -4,6 +4,7 @@ include 'db.php';
 
 $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
+$status = $_GET['status'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -63,7 +64,6 @@ $asal = $_GET['asal'] ?? '';
 <script>
 let lastId = 0;
 let isInitialLoad = true;
-let lastNotifTime = Date.now();
 
 function confirmDelete(id) {
   Swal.fire({
@@ -109,8 +109,8 @@ function confirmLogout() {
 }
 
 function fetchData(isManual = false) {
-  const keyword = document.getElementById('search')?.value || '';
-  const asal = document.getElementById('asal_sekolah')?.value || '';
+  const keyword = document.getElementById('search')?.value || '<?= $keyword ?>';
+  const asal = document.getElementById('asal_sekolah')?.value || '<?= $asal ?>';
 
   const params = new URLSearchParams({
     keyword: keyword,
@@ -123,25 +123,17 @@ function fetchData(isManual = false) {
     .then(data => {
       if (data.html) {
         document.getElementById('tabel-buku-tamu').innerHTML = data.html;
-        if (!isManual) {
-          const tableContainer = document.getElementById('data-container');
-          tableContainer.scrollTop = tableContainer.scrollHeight;
-        }
       }
 
       if (data.newCount > 0 && !isManual && !isInitialLoad) {
-        const now = Date.now();
-        if (now - lastNotifTime <= 2000) {
-          document.getElementById('notifSound').play();
-          Swal.fire({
-            icon: 'success',
-            title: '🔔 Pesan Baru Masuk',
-            text: `${data.newCount} pesan baru berhasil diterima.`,
-            showConfirmButton: false,
-            timer: 3000
-          });
-        }
-        lastNotifTime = now;
+        document.getElementById('notifSound').play();
+        Swal.fire({
+          icon: 'success',
+          title: '🔔 Pesan Baru Masuk',
+          text: `${data.newCount} pesan baru berhasil diterima.`,
+          showConfirmButton: false,
+          timer: 3000
+        });
       }
 
       if (data.latestId > lastId) {

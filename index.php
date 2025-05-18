@@ -11,6 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="style.css" rel="stylesheet">
 
+  <!-- Custom Styling -->
   <style>
     body {
       background-image: url(hero-smk2.jpg);
@@ -88,7 +89,7 @@
 
             <!-- Link ke Data Tamu -->
             <div class="text-center mt-3">
-              <a href="tamu.php" class="btn btn-outline-light bg-dark text-white rounded-pill px-4">
+              <a href="tamu.php" class="btn btn-outline-light rounded-pill bg-dark text-white px-4">
                 Lihat Data Tamu
               </a>
             </div>
@@ -111,11 +112,6 @@
         text: 'Data tamu berhasil dikirim.',
         confirmButtonColor: '#3085d6',
         confirmButtonText: 'Oke'
-      }).then(() => {
-        // Menghapus parameter success dari URL tanpa reload
-        const url = new URL(window.location.href);
-        url.searchParams.delete('success');
-        window.history.replaceState({}, document.title, url.pathname);
       });
     </script>
   <?php endif; ?>
