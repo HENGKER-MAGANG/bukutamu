@@ -38,7 +38,7 @@ $asal = $_GET['asal'] ?? '';
 
     <!-- Tabel Data -->
     <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-      <div id="new-message-indicator" class="hidden mb-4">
+      <div id="new-message-indicator" class="hidden mb-4 no-print">
         <div class="flex justify-between items-center bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">
           <span id="indicator-text" class="font-bold">🔔 Pesan baru masuk!</span>
           <a href="tamu.php" class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded shadow">Lihat semua data</a>
