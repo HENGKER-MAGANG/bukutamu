@@ -38,7 +38,7 @@ $asal = $_GET['asal'] ?? '';
 
     <!-- Tabel Data -->
     <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-      <div id="new-message-indicator" class="hidden mb-2 text-green-600 font-bold"></div>
+      <div id="new-message-indicator" class="hidden mb-4 text-green-700 font-semibold bg-green-100 p-2 rounded-lg shadow"></div>
       <table class="w-full table-auto text-sm text-left">
         <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <tr>
@@ -52,13 +52,14 @@ $asal = $_GET['asal'] ?? '';
         </thead>
         <tbody id="tabel-buku-tamu"></tbody>
       </table>
-      <div class="mt-4 text-right no-print">
+      <div class="mt-4 flex justify-between items-center no-print">
         <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow">🖨️ Print</button>
+        <button id="showAllBtn" onclick="showAllData()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded shadow">🔁 Tampilkan Semua Data</button>
       </div>
     </div>
   </div>
 
-  <audio id="notifSound" src="https://notificationsounds.com/soundfiles/b2ffb6e49135a5f9c0c4f6f7d38c4a86/file-sounds-1151-pristine.mp3" preload="auto"></audio>
+  <audio id="notifSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_7c4cc15696.mp3" preload="auto"></audio>
 
   <script>
     function confirmDelete(id) {
@@ -95,12 +96,16 @@ $asal = $_GET['asal'] ?? '';
     }
 
     let lastId = 0;
+    let filter = {
+      keyword: '<?= $keyword ?>',
+      asal: '<?= $asal ?>'
+    };
 
-    function fetchData() {
+    function fetchData(isLive = true) {
       const params = new URLSearchParams({
-        keyword: '<?= $keyword ?>',
-        asal: '<?= $asal ?>',
-        lastId: lastId
+        keyword: filter.keyword,
+        asal: filter.asal,
+        lastId: isLive ? lastId : 0
       });
 
       fetch('fetch_data.php?' + params.toString())
@@ -108,15 +113,26 @@ $asal = $_GET['asal'] ?? '';
         .then(data => {
           if (data.html) {
             document.getElementById('tabel-buku-tamu').innerHTML = data.html;
-            document.getElementById('new-message-indicator').innerHTML = `🔔 ${data.newCount} pesan baru masuk!`;
-            document.getElementById('new-message-indicator').classList.remove('hidden');
 
-            document.getElementById('notifSound').play();
+            if (isLive && data.newCount > 0) {
+              document.getElementById('notifSound').play().catch(e => {});
+              document.getElementById('new-message-indicator').innerHTML = `🔔 ${data.newCount} pesan baru masuk!`;
+              document.getElementById('new-message-indicator').classList.remove('hidden');
+              document.getElementById('showAllBtn').classList.remove('hidden');
+
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (!isLive) {
+              document.getElementById('new-message-indicator').classList.add('hidden');
+              document.getElementById('showAllBtn').classList.add('hidden');
+            }
+
             lastId = data.latestId;
-
-            window.scrollTo({ top: 0, behavior: 'smooth' }); // Autoscroll ke atas
           }
         });
+    }
+
+    function showAllData() {
+      fetchData(false); // Ambil semua data ulang
     }
 
     fetchData();
