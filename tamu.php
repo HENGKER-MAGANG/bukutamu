@@ -17,9 +17,9 @@ $asal = $_GET['asal'] ?? '';
 <body class="bg-gray-100 min-h-screen p-4">
 
   <div class="max-w-6xl mx-auto">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 no-print">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
       <h1 class="text-2xl font-bold text-gray-700">📖 Data Buku Tamu</h1>
-      <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow">
+      <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow no-print">
         Logout
       </button>
     </div>
@@ -108,18 +108,20 @@ $asal = $_GET['asal'] ?? '';
         .then(data => {
           if (data.html) {
             document.getElementById('tabel-buku-tamu').innerHTML = data.html;
+          }
 
-            if (data.newCount > 0) {
-              document.getElementById('new-message-indicator').innerHTML = `🔔 ${data.newCount} pesan baru masuk!`;
-              document.getElementById('new-message-indicator').classList.remove('hidden');
+          if (data.newCount > 0 && data.recent) {
+            const indicator = document.getElementById('new-message-indicator');
+            indicator.textContent = `🔔 ${data.newCount} pesan baru masuk!`;
+            indicator.classList.remove('hidden');
 
-              document.getElementById('notifSound').play();
-              window.scrollTo({ top: 0, behavior: 'smooth' }); // Autoscroll ke atas
-            } else {
-              document.getElementById('new-message-indicator').classList.add('hidden');
-            }
-
+            document.getElementById('notifSound').play();
             lastId = data.latestId;
+
+            setTimeout(() => {
+              indicator.classList.add('hidden');
+              indicator.textContent = '';
+            }, 3000);
           }
         });
     }

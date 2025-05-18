@@ -26,10 +26,13 @@ $result = mysqli_query($conn, $query);
 
 $html = '';
 $latestId = $lastId;
+$latestTimestamp = null;
 $no = 1;
 
 while ($row = mysqli_fetch_assoc($result)) {
-    $latestId = $row['id']; // update last ID
+    $latestId = $row['id'];
+    $latestTimestamp = $row['created_at'] ?? date('Y-m-d H:i:s'); // pastikan kolom timestamp ada
+
     $html .= '
     <tr>
         <td class="p-2 border-b">' . $no++ . '</td>
@@ -45,10 +48,17 @@ while ($row = mysqli_fetch_assoc($result)) {
     </tr>';
 }
 
+// Hitung apakah data terbaru masuk dalam 2 detik terakhir
+$recent = false;
+if ($latestTimestamp) {
+    $recent = (time() - strtotime($latestTimestamp)) <= 2;
+}
+
 $response = [
     'html' => $html,
     'latestId' => $latestId,
-    'newCount' => ($latestId > $lastId) ? ($latestId - $lastId) : 0
+    'newCount' => ($latestId > $lastId) ? ($latestId - $lastId) : 0,
+    'recent' => $recent
 ];
 
 header('Content-Type: application/json');
