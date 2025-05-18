@@ -11,4 +11,5 @@ $stmt->bind_param("ssss", $nama, $email, $asal_sekolah, $pesan);
 $stmt->execute();
 
 header("Location: index.php?success=1");
+exit;
 ?>
