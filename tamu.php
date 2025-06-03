@@ -46,7 +46,7 @@ $asal = $_GET['asal'] ?? '';
           <th class="p-2">Nama</th>
           <th class="p-2">Email</th>
           <th class="p-2">Asal Sekolah</th>
-          <th class="p-2">Pesan</th>
+          <th class="p-2">Alasan Ingin Bergabung</th>
           <th class="p-2 no-print">Aksi</th>
         </tr>
       </thead>
