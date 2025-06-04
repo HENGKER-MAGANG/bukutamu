@@ -123,6 +123,8 @@ function fetchData() {
           indicator.classList.add('hidden');
           indicator.textContent = '';
         }, 3000);
+      } else {
+        lastId = data.latestId;
       }
     });
 }

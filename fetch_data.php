@@ -4,14 +4,11 @@ include 'db.php';
 $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
 $lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
-$mode = $_GET['mode'] ?? 'initial'; // nilai default = initial
 
-// Query dasar
 $query = "SELECT * FROM buku_tamu WHERE 1=1";
 $params = [];
 $types = "";
 
-// Tambahkan filter pencarian jika ada
 if (!empty($keyword)) {
     $query .= " AND nama LIKE ?";
     $params[] = "%$keyword%";
@@ -22,14 +19,6 @@ if (!empty($asal)) {
     $params[] = "%$asal%";
     $types .= "s";
 }
-
-// Jika mode adalah update (dari polling), hanya ambil data dengan id > lastId
-if ($mode === 'update' && $lastId > 0) {
-    $query .= " AND id > ?";
-    $params[] = $lastId;
-    $types .= "i";
-}
-
 $query .= " ORDER BY id ASC";
 
 $stmt = $conn->prepare($query);
@@ -42,25 +31,34 @@ $result = $stmt->get_result();
 $html = '';
 $newCount = 0;
 $latestId = $lastId;
+$recent = false;
 $no = 1;
 
-// Jika initial load, tampilkan semua data
+$currentTime = time();
+
 while ($d = $result->fetch_assoc()) {
-    $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
+    $id = $d['id'];
+    $createdAt = strtotime($d['created_at'] ?? $d['waktu'] ?? ''); // Pastikan field waktu/created_at ada
+    $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $id . '">';
     $html .= '<td class="p-2">' . $no++ . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['nama']) . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['email']) . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['asal_sekolah']) . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['pesan']) . '</td>';
     $html .= '<td class="p-2 flex gap-2 no-print">';
-    $html .= '<a href="edit_tamu.php?id=' . $d['id'] . '" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500 text-xs">Edit</a>';
-    $html .= '<button onclick="confirmDelete(' . $d['id'] . ')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">Hapus</button>';
+    $html .= '<a href="edit_tamu.php?id=' . $id . '" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500 text-xs">Edit</a>';
+    $html .= '<button onclick="confirmDelete(' . $id . ')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">Hapus</button>';
     $html .= '</td>';
     $html .= '</tr>';
 
-    if ($d['id'] > $latestId) {
+    if ($id > $lastId) {
         $newCount++;
-        $latestId = $d['id'];
+        if ($id > $latestId) {
+            $latestId = $id;
+        }
+        if ($createdAt && ($currentTime - $createdAt <= 2)) {
+            $recent = true;
+        }
     }
 }
 
@@ -68,5 +66,5 @@ echo json_encode([
     'html' => $html,
     'newCount' => $newCount,
     'latestId' => $latestId,
-    'recent' => $mode === 'update' && $newCount > 0
+    'recent' => $recent
 ]);
