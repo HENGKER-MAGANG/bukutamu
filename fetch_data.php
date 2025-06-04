@@ -24,7 +24,7 @@ if (!empty($asal)) {
 }
 
 // Hitung total data
-$countQuery = "SELECT COUNT(*) as total FROM bukutamu $where";
+$countQuery = "SELECT COUNT(*) as total FROM buku_tamu $where";
 $countStmt = $conn->prepare($countQuery);
 if (!empty($params)) {
     $countStmt->bind_param($types, ...$params);
@@ -35,7 +35,7 @@ $totalRows = $countResult->fetch_assoc()['total'];
 $totalPages = ceil($totalRows / $limit);
 
 // Ambil data berdasarkan pagination
-$query = "SELECT * FROM bukutamu $where ORDER BY id DESC LIMIT ? OFFSET ?";
+$query = "SELECT * FROM buku_tamu $where ORDER BY id DESC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($query);
 if (!empty($params)) {
     $types .= "ii";
