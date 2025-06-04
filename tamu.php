@@ -40,7 +40,9 @@
             <th class="py-2 px-4 border no-print">Aksi</th>
           </tr>
         </thead>
-        <tbody id="dataContainer"></tbody>
+        <tbody id="dataContainer">
+          <!-- Data akan dimuat lewat JS -->
+        </tbody>
       </table>
       <div id="paginationContainer" class="mt-4 no-print"></div>
     </div>
@@ -54,10 +56,17 @@
     let currentPage = 1;
 
     function fetchData() {
-      const keyword = document.getElementById('searchInput').value;
-      const asal = document.getElementById('asalInput').value;
+      const keyword = document.getElementById('searchInput').value.trim();
+      const asal = document.getElementById('asalInput').value.trim();
 
-      fetch(`fetch_data.php?keyword=${encodeURIComponent(keyword)}&asal=${encodeURIComponent(asal)}&lastId=${lastId}&page=${currentPage}`)
+      const params = new URLSearchParams({
+        keyword: keyword,
+        asal: asal,
+        lastId: lastId,
+        page: currentPage
+      });
+
+      fetch(`fetch_data.php?${params}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('dataContainer').innerHTML = data.html;
@@ -102,18 +111,21 @@
       window.print();
     }
 
-    // Event input pencarian
+    // Event pencarian dan filter
     document.getElementById('searchInput').addEventListener('input', () => {
       currentPage = 1;
       fetchData();
     });
+
     document.getElementById('asalInput').addEventListener('input', () => {
       currentPage = 1;
       fetchData();
     });
 
-    // Jalankan pertama kali & auto refresh
+    // Auto fetch data pertama kali
     fetchData();
+
+    // Auto reload setiap 3 detik
     setInterval(fetchData, 3000);
   </script>
 </body>
