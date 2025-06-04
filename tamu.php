@@ -15,7 +15,7 @@ include 'db.php';
 
 <div class="max-w-6xl mx-auto">
   <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-    <h1 class="text-2xl font-bold text-gray-700">Data Calon Anggota</h1>
+    <h1 class="text-2xl font-bold text-gray-700"> 👨‍💻 Data Calon Anggota</h1>
     <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow no-print">
       Logout
     </button>
@@ -61,55 +61,19 @@ include 'db.php';
 <audio id="notifSound" src="https://notificationsounds.com/soundfiles/b2ffb6e49135a5f9c0c4f6f7d38c4a86/file-sounds-1151-pristine.mp3" preload="auto"></audio>
 
 <script>
-function confirmDelete(id) {
-  Swal.fire({
-    title: 'Yakin hapus data ini?',
-    text: "Data akan hilang permanen!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Ya, Hapus',
-    cancelButtonText: 'Batal'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      window.location.href = 'hapus_tamu.php?id=' + id;
-    }
-  });
-}
-
-function confirmLogout() {
-  Swal.fire({
-    title: 'Yakin ingin logout?',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Ya, Logout',
-    cancelButtonText: 'Batal',
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#6c757d'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      window.location.href = 'logout.php?status=logout_berhasil';
-    }
-  });
-}
-
-function resetForm() {
-  document.getElementById('keyword').value = '';
-  document.getElementById('asal').value = '';
-  fetchData(); // ambil ulang semua data
-}
-
 let lastId = 0;
+let currentPage = 1;
 
-function fetchData() {
+function fetchData(page = 1) {
   const keyword = document.getElementById('keyword').value;
   const asal = document.getElementById('asal').value;
+  currentPage = page;
 
   const params = new URLSearchParams({
     keyword: keyword,
     asal: asal,
-    lastId: lastId
+    lastId: lastId,
+    page: currentPage
   });
 
   fetch('fetch_data.php?' + params.toString())
@@ -117,6 +81,15 @@ function fetchData() {
     .then(data => {
       if (data.html !== undefined) {
         document.getElementById('tabel-buku-tamu').innerHTML = data.html;
+      }
+
+      if (data.pagination !== undefined) {
+        if (!document.getElementById('pagination-container')) {
+          const div = document.createElement("div");
+          div.id = "pagination-container";
+          document.getElementById('data-container').appendChild(div);
+        }
+        document.getElementById('pagination-container').innerHTML = data.pagination;
       }
 
       if (data.newCount > 0 && data.recent) {
@@ -136,15 +109,25 @@ function fetchData() {
     });
 }
 
+function goToPage(page) {
+  fetchData(page);
+}
+
 document.getElementById('searchForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  fetchData();
+  fetchData(1); // kembali ke halaman 1 saat cari
 });
 
-// Jalankan saat pertama kali halaman dibuka
+function resetForm() {
+  document.getElementById('keyword').value = '';
+  document.getElementById('asal').value = '';
+  fetchData(1); // kembali ke halaman 1
+}
+
 fetchData();
-setInterval(fetchData, 3000);
+setInterval(() => fetchData(currentPage), 3000);
 </script>
+
 
 <style>
 @media print {
