@@ -1,16 +1,13 @@
 <?php
 include 'session.php';
 include 'db.php';
-
-$keyword = $_GET['keyword'] ?? '';
-$asal = $_GET['asal'] ?? '';
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Data Calon Anggota</title>
+  <title> 👨‍💻 Data Calon Anggota</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -26,12 +23,12 @@ $asal = $_GET['asal'] ?? '';
 
   <!-- Form Pencarian -->
   <div class="bg-white rounded-lg shadow p-4 mb-6 no-print">
-    <form method="GET" class="flex flex-col md:flex-row gap-4">
-      <input type="text" name="keyword" value="<?= htmlspecialchars($keyword) ?>" placeholder="🔍 Cari nama..." class="flex-1 px-4 py-2 border rounded-lg">
-      <input type="text" name="asal" value="<?= htmlspecialchars($asal) ?>" placeholder="🏫 Cari asal sekolah..." class="flex-1 px-4 py-2 border rounded-lg">
+    <form id="searchForm" class="flex flex-col md:flex-row gap-4">
+      <input type="text" name="keyword" id="keyword" placeholder="🔍 Cari nama..." class="flex-1 px-4 py-2 border rounded-lg">
+      <input type="text" name="asal" id="asal" placeholder="🏫 Cari asal sekolah..." class="flex-1 px-4 py-2 border rounded-lg">
       <div class="flex gap-2">
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">Cari</button>
-        <a href="tamu.php" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Reset</a>
+        <button type="button" onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Reset</button>
       </div>
     </form>
   </div>
@@ -51,7 +48,7 @@ $asal = $_GET['asal'] ?? '';
         </tr>
       </thead>
       <tbody id="tabel-buku-tamu">
-        <!-- Isi akan di-fetch oleh JS -->
+        <!-- Isi akan diisi oleh JavaScript -->
       </tbody>
     </table>
     <div class="mt-4 text-right no-print">
@@ -97,12 +94,21 @@ function confirmLogout() {
   });
 }
 
+function resetForm() {
+  document.getElementById('keyword').value = '';
+  document.getElementById('asal').value = '';
+  fetchData(); // ambil ulang semua data
+}
+
 let lastId = 0;
 
 function fetchData() {
+  const keyword = document.getElementById('keyword').value;
+  const asal = document.getElementById('asal').value;
+
   const params = new URLSearchParams({
-    keyword: '<?= $keyword ?>',
-    asal: '<?= $asal ?>',
+    keyword: keyword,
+    asal: asal,
     lastId: lastId
   });
 
@@ -130,6 +136,12 @@ function fetchData() {
     });
 }
 
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  fetchData();
+});
+
+// Jalankan saat pertama kali halaman dibuka
 fetchData();
 setInterval(fetchData, 3000);
 </script>
