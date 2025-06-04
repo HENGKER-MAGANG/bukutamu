@@ -117,13 +117,13 @@ function fetchData() {
         indicator.classList.remove('hidden');
 
         document.getElementById('notifSound').play();
-        lastId = data.latestId;
-
         setTimeout(() => {
           indicator.classList.add('hidden');
           indicator.textContent = '';
         }, 3000);
-      } else {
+      }
+
+      if (data.latestId > lastId) {
         lastId = data.latestId;
       }
     });
