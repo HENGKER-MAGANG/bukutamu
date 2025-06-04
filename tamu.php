@@ -1,144 +1,120 @@
-<?php
-include 'session.php';
-include 'db.php';
-?>
-
+<?php include 'db.php'; ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title> 👨‍💻 Data Calon Anggota</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Buku Tamu</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
+<body class="bg-gray-50">
 
-<div class="max-w-6xl mx-auto">
-  <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-    <h1 class="text-2xl font-bold text-gray-700"> 👨‍💻 Data Calon Anggota</h1>
-    <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow no-print">
-      Logout
-    </button>
-  </div>
-
-  <!-- Form Pencarian -->
-  <div class="bg-white rounded-lg shadow p-4 mb-6 no-print">
-    <form id="searchForm" class="flex flex-col md:flex-row gap-4">
-      <input type="text" name="keyword" id="keyword" placeholder="🔍 Cari nama..." class="flex-1 px-4 py-2 border rounded-lg">
-      <input type="text" name="asal" id="asal" placeholder="🏫 Cari asal sekolah..." class="flex-1 px-4 py-2 border rounded-lg">
-      <div class="flex gap-2">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">Cari</button>
-        <button type="button" onclick="resetForm()" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">Reset</button>
+  <div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-xl font-semibold">Data Buku Tamu</h1>
+      <div class="no-print flex items-center space-x-2">
+        <input type="text" id="searchInput" placeholder="Cari nama..." class="border p-1 rounded text-sm" />
+        <input type="text" id="asalInput" placeholder="Cari asal sekolah..." class="border p-1 rounded text-sm" />
+        <button onclick="printTable()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">Print</button>
       </div>
-    </form>
-  </div>
+    </div>
 
-  <!-- Tabel Data -->
-  <div class="bg-white rounded-lg shadow p-4 overflow-x-auto" id="data-container">
-    <div id="new-message-indicator" class="hidden mb-2 text-green-600 font-bold no-print"></div>
-    <table class="w-full table-auto text-sm text-left">
-      <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <tr>
-          <th class="p-2">No</th>
-          <th class="p-2">Nama</th>
-          <th class="p-2">Email</th>
-          <th class="p-2">Asal Sekolah</th>
-          <th class="p-2">Alasan Ingin Bergabung</th>
-          <th class="p-2 no-print">Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="tabel-buku-tamu">
-        <!-- Isi akan diisi oleh JavaScript -->
-      </tbody>
-    </table>
-    <div class="mt-4 text-right no-print">
-      <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow">🖨️ Print</button>
+    <div class="relative">
+      <div class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5" id="newBadge" style="display: none;">
+        Baru
+      </div>
+      <table class="min-w-full bg-white border border-gray-200 shadow">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="py-2 px-4 border">No</th>
+            <th class="py-2 px-4 border">Nama</th>
+            <th class="py-2 px-4 border">Email</th>
+            <th class="py-2 px-4 border">Asal Sekolah</th>
+            <th class="py-2 px-4 border">Pesan</th>
+            <th class="py-2 px-4 border no-print">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="dataContainer"></tbody>
+      </table>
+      <div id="paginationContainer" class="mt-4 no-print"></div>
     </div>
   </div>
-</div>
 
-<!-- Notifikasi Suara -->
-<audio id="notifSound" src="https://notificationsounds.com/soundfiles/b2ffb6e49135a5f9c0c4f6f7d38c4a86/file-sounds-1151-pristine.mp3" preload="auto"></audio>
+  <!-- Suara notifikasi -->
+  <audio id="notificationSound" src="notification.mp3" preload="auto"></audio>
 
-<script>
-let lastId = 0;
-let currentPage = 1;
+  <script>
+    let lastId = 0;
+    let currentPage = 1;
 
-function fetchData(page = 1) {
-  const keyword = document.getElementById('keyword').value;
-  const asal = document.getElementById('asal').value;
-  currentPage = page;
+    function fetchData() {
+      const keyword = document.getElementById('searchInput').value;
+      const asal = document.getElementById('asalInput').value;
 
-  const params = new URLSearchParams({
-    keyword: keyword,
-    asal: asal,
-    lastId: lastId,
-    page: currentPage
-  });
+      fetch(`fetch_data.php?keyword=${encodeURIComponent(keyword)}&asal=${encodeURIComponent(asal)}&lastId=${lastId}&page=${currentPage}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('dataContainer').innerHTML = data.html;
+          document.getElementById('paginationContainer').innerHTML = data.pagination;
 
-  fetch('fetch_data.php?' + params.toString())
-    .then(res => res.json())
-    .then(data => {
-      if (data.html !== undefined) {
-        document.getElementById('tabel-buku-tamu').innerHTML = data.html;
-      }
+          if (data.newCount > 0 && data.recent) {
+            document.getElementById('notificationSound').play();
+            document.getElementById('newBadge').style.display = 'inline-block';
+            setTimeout(() => {
+              document.getElementById('newBadge').style.display = 'none';
+            }, 3000);
+          }
 
-      if (data.pagination !== undefined) {
-        if (!document.getElementById('pagination-container')) {
-          const div = document.createElement("div");
-          div.id = "pagination-container";
-          document.getElementById('data-container').appendChild(div);
+          lastId = data.latestId;
+        })
+        .catch(err => console.error('Gagal memuat data:', err));
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      fetchData();
+    }
+
+    function confirmDelete(id) {
+      Swal.fire({
+        title: 'Yakin ingin menghapus?',
+        text: 'Data tidak bisa dikembalikan setelah dihapus!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Hapus',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = `hapus_tamu.php?id=${id}`;
         }
-        document.getElementById('pagination-container').innerHTML = data.pagination;
-      }
+      });
+    }
 
-      if (data.newCount > 0 && data.recent) {
-        const indicator = document.getElementById('new-message-indicator');
-        indicator.textContent = `🔔 ${data.newCount} pesan baru masuk!`;
-        indicator.classList.remove('hidden');
-        document.getElementById('notifSound').play();
-        setTimeout(() => {
-          indicator.classList.add('hidden');
-          indicator.textContent = '';
-        }, 3000);
-      }
+    function printTable() {
+      window.print();
+    }
 
-      if (data.latestId > lastId) {
-        lastId = data.latestId;
-      }
+    // Event input pencarian
+    document.getElementById('searchInput').addEventListener('input', () => {
+      currentPage = 1;
+      fetchData();
     });
-}
+    document.getElementById('asalInput').addEventListener('input', () => {
+      currentPage = 1;
+      fetchData();
+    });
 
-function goToPage(page) {
-  fetchData(page);
-}
-
-document.getElementById('searchForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  fetchData(1); // kembali ke halaman 1 saat cari
-});
-
-function resetForm() {
-  document.getElementById('keyword').value = '';
-  document.getElementById('asal').value = '';
-  fetchData(1); // kembali ke halaman 1
-}
-
-fetchData();
-setInterval(() => fetchData(currentPage), 3000);
-</script>
-
-
-<style>
-@media print {
-  .no-print { display: none !important; }
-  body { margin: 0; padding: 0; background: white; }
-  table { width: 100%; border-collapse: collapse !important; font-size: 12px; }
-  th, td { border: 1px solid #ccc !important; padding: 6px !important; }
-  th { background: #333 !important; color: white !important; }
-  tr:nth-child(even) { background-color: #f2f2f2 !important; }
-}
-</style>
-
+    // Jalankan pertama kali & auto refresh
+    fetchData();
+    setInterval(fetchData, 3000);
+  </script>
 </body>
 </html>
