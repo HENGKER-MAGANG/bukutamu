@@ -50,7 +50,9 @@ $asal = $_GET['asal'] ?? '';
           <th class="p-2 no-print">Aksi</th>
         </tr>
       </thead>
-      <tbody id="tabel-buku-tamu"></tbody>
+      <tbody id="tabel-buku-tamu">
+        <!-- Isi akan di-fetch oleh JS -->
+      </tbody>
     </table>
     <div class="mt-4 text-right no-print">
       <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded shadow">🖨️ Print</button>
@@ -107,7 +109,7 @@ function fetchData() {
   fetch('fetch_data.php?' + params.toString())
     .then(res => res.json())
     .then(data => {
-      if (data.html) {
+      if (data.html !== undefined) {
         document.getElementById('tabel-buku-tamu').innerHTML = data.html;
       }
 
@@ -115,7 +117,6 @@ function fetchData() {
         const indicator = document.getElementById('new-message-indicator');
         indicator.textContent = `🔔 ${data.newCount} pesan baru masuk!`;
         indicator.classList.remove('hidden');
-
         document.getElementById('notifSound').play();
         setTimeout(() => {
           indicator.classList.add('hidden');
