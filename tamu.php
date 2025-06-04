@@ -10,7 +10,7 @@ $asal = $_GET['asal'] ?? '';
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Data Buku Tamu</title>
+  <title>Data Calon Anggota</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -18,7 +18,7 @@ $asal = $_GET['asal'] ?? '';
 
 <div class="max-w-6xl mx-auto">
   <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-    <h1 class="text-2xl font-bold text-gray-700">📖 Data Buku Tamu</h1>
+    <h1 class="text-2xl font-bold text-gray-700">Data Calon Anggota</h1>
     <button onclick="confirmLogout()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded shadow no-print">
       Logout
     </button>
