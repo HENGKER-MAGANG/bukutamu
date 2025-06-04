@@ -4,12 +4,14 @@ include 'db.php';
 $keyword = $_GET['keyword'] ?? '';
 $asal = $_GET['asal'] ?? '';
 $lastId = isset($_GET['lastId']) ? intval($_GET['lastId']) : 0;
+$mode = $_GET['mode'] ?? 'initial'; // nilai default = initial
 
-// Ambil semua data sesuai filter
+// Query dasar
 $query = "SELECT * FROM buku_tamu WHERE 1=1";
 $params = [];
 $types = "";
 
+// Tambahkan filter pencarian jika ada
 if (!empty($keyword)) {
     $query .= " AND nama LIKE ?";
     $params[] = "%$keyword%";
@@ -20,6 +22,14 @@ if (!empty($asal)) {
     $params[] = "%$asal%";
     $types .= "s";
 }
+
+// Jika mode adalah update (dari polling), hanya ambil data dengan id > lastId
+if ($mode === 'update' && $lastId > 0) {
+    $query .= " AND id > ?";
+    $params[] = $lastId;
+    $types .= "i";
+}
+
 $query .= " ORDER BY id ASC";
 
 $stmt = $conn->prepare($query);
@@ -34,14 +44,8 @@ $newCount = 0;
 $latestId = $lastId;
 $no = 1;
 
+// Jika initial load, tampilkan semua data
 while ($d = $result->fetch_assoc()) {
-    if ($d['id'] > $lastId) {
-        $newCount++;
-        if ($d['id'] > $latestId) {
-            $latestId = $d['id'];
-        }
-    }
-
     $html .= '<tr class="border-b hover:bg-gray-100" data-id="' . $d['id'] . '">';
     $html .= '<td class="p-2">' . $no++ . '</td>';
     $html .= '<td class="p-2">' . htmlspecialchars($d['nama']) . '</td>';
@@ -53,11 +57,16 @@ while ($d = $result->fetch_assoc()) {
     $html .= '<button onclick="confirmDelete(' . $d['id'] . ')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs">Hapus</button>';
     $html .= '</td>';
     $html .= '</tr>';
+
+    if ($d['id'] > $latestId) {
+        $newCount++;
+        $latestId = $d['id'];
+    }
 }
 
 echo json_encode([
     'html' => $html,
     'newCount' => $newCount,
     'latestId' => $latestId,
-    'recent' => $newCount > 0
+    'recent' => $mode === 'update' && $newCount > 0
 ]);
